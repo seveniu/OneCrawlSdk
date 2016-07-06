@@ -1,5 +1,7 @@
 package com.seveniu.node;
 
+import java.util.List;
+
 /**
  * Created by seveniu on 5/12/16.
  * FieldResult
@@ -9,6 +11,7 @@ public class FieldResult {
     private int fieldHtmlType;
     private String name;
     private String result;
+    private List<Link> linkResult;
 
     public int getFieldId() {
         return fieldId;
@@ -42,6 +45,14 @@ public class FieldResult {
         this.result = result;
     }
 
+    public List<Link> getLinkResult() {
+        return linkResult;
+    }
+
+    public void setLinkResult(List<Link> linkResult) {
+        this.linkResult = linkResult;
+    }
+
     @Override
     public String toString() {
         return "FieldResult{" +
@@ -49,6 +60,7 @@ public class FieldResult {
                 ", fieldHtmlType=" + fieldHtmlType +
                 ", name='" + name + '\'' +
                 ", result='" + result + '\'' +
+                ", linkResult=" + linkResult +
                 '}';
     }
 }

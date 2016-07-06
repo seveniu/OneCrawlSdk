@@ -2,9 +2,7 @@ package com.seveniu.consumer;
 
 import com.seveniu.node.Node;
 import com.seveniu.task.CrawlTaskStatistic;
-import com.seveniu.thrift.Task;
-
-import java.util.List;
+import com.seveniu.thrift.TaskStatus;
 
 /**
  * Created by seveniu on 5/26/16.
@@ -17,5 +15,7 @@ public interface Consumer {
 
     void statistic(CrawlTaskStatistic statistic);
 
-    List<Task> getTasks();
+    void taskStatusChange(String taskId, TaskStatus taskStatus);
+
+
 }
