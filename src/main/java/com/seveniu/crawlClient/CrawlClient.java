@@ -12,6 +12,8 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.ConnectException;
+
 /**
  * Created by seveniu on 7/3/16.
  * CrawlClient
@@ -31,12 +33,12 @@ public class CrawlClient {
 
     private CrawlThrift.Client thriftClient;
 
-    public CrawlThrift.Client build(String host, int port) throws TTransportException {
+    public CrawlThrift.Client build(String host, int port) throws TTransportException, ConnectException {
 
         TTransport transport = new TSocket(host, port);
         transport.open();
 
-        logger.info("template client connect /{}:{}", host, port);
+        logger.info("crawl server connect /{}:{}", host, port);
 
         TProtocol protocol = new TBinaryProtocol(transport);
         this.thriftClient = new CrawlThrift.Client(protocol);

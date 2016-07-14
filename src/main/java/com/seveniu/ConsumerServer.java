@@ -3,14 +3,16 @@ package com.seveniu;
 import com.seveniu.consumer.Consumer;
 import com.seveniu.crawlClient.ConsumerConfig;
 import com.seveniu.crawlClient.CrawlClient;
-import com.seveniu.thrift.ConsumerThriftImpl;
 import com.seveniu.thrift.ConsumerThrift;
+import com.seveniu.thrift.ConsumerThriftImpl;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.ConnectException;
 
 /**
  * Created by seveniu on 5/26/16.
@@ -20,16 +22,18 @@ public class ConsumerServer {
 
     private static Logger logger = LoggerFactory.getLogger(ConsumerServer.class);
 
-    public static String start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) {
+    public static String start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) throws TTransportException, ConnectException {
         if ("thrift".equals(config.getType())) {
             startConsumerServer(consumer, config.getPort());
         }
 
         try {
-            CrawlClient.get().build(crawlHost, crawlPort);
-        } catch (TTransportException e) {
+            logger.info("connect crawl server after 3 second!");
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        CrawlClient.get().build(crawlHost, crawlPort);
         return CrawlClient.get().reg(config);
     }
 
@@ -45,11 +49,6 @@ public class ConsumerServer {
                 e.printStackTrace();
             }
         }, "consumer-server-thread").start();
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
     }
 
