@@ -6,6 +6,7 @@ import com.seveniu.thrift.TaskStatus;
 
 /**
  * Created by seveniu on 5/26/16.
+ * Consumer
  */
 public interface Consumer {
 

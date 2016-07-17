@@ -21,6 +21,7 @@ import java.net.ConnectException;
 public class ConsumerServer {
 
     private static Logger logger = LoggerFactory.getLogger(ConsumerServer.class);
+    private static volatile boolean running = false;
 
     public static String start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) throws TTransportException, ConnectException {
         if ("thrift".equals(config.getType())) {
@@ -38,15 +39,21 @@ public class ConsumerServer {
     }
 
     private static void startConsumerServer(Consumer consumer, int port) {
+        if (running) {
+            logger.debug(" server is running ");
+            return;
+        }
         new Thread(() -> {
 
             try {
                 TServerSocket socket = new TServerSocket(port);
                 ConsumerThrift.Processor processor = new ConsumerThrift.Processor<>(new ConsumerThriftImpl(consumer));
                 TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(socket).processor(processor));
+                running = true;
                 server.serve();
             } catch (TTransportException e) {
                 e.printStackTrace();
+                running = false;
             }
         }, "consumer-server-thread").start();
 

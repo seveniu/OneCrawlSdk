@@ -1,4 +1,4 @@
- namespace java service.demo
+ namespace java com.seveniu.thrift
  enum TaskStatus {
     WAIT,RUNNING,STOP
  }
