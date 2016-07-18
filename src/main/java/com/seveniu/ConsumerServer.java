@@ -23,7 +23,7 @@ public class ConsumerServer {
     private static Logger logger = LoggerFactory.getLogger(ConsumerServer.class);
     private static volatile boolean running = false;
 
-    public static String start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) throws TTransportException, ConnectException {
+    public static void start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) throws TTransportException, ConnectException {
         if ("thrift".equals(config.getType())) {
             startConsumerServer(consumer, config.getPort());
         }
@@ -35,7 +35,7 @@ public class ConsumerServer {
             e.printStackTrace();
         }
         CrawlClient.get().build(crawlHost, crawlPort);
-        return CrawlClient.get().reg(config);
+        CrawlClient.get().reg(config);
     }
 
     private static void startConsumerServer(Consumer consumer, int port) {

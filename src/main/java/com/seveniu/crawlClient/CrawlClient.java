@@ -22,6 +22,7 @@ public class CrawlClient {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private static CrawlClient crawlClient = new CrawlClient();
+    private String uuid;
 
     private CrawlClient() {
 
@@ -51,21 +52,33 @@ public class CrawlClient {
 
     private static final Object lock = new Object();
 
-    public String reg(ConsumerConfig consumerConfig) {
+    public void reg(ConsumerConfig consumerConfig) {
         try {
-            if (consumerConfig == null) {
-                return null;
-            }
-            synchronized (lock) {
-                return thriftClient.reg(consumerConfig);
+            if (consumerConfig != null) {
+                synchronized (lock) {
+                    this.uuid = thriftClient.reg(consumerConfig);
+                }
+            } else {
+                throw new NullPointerException("consumer config is null");
             }
         } catch (TException e) {
             e.printStackTrace();
         }
-        return null;
     }
 
-    public boolean addTask(String uuid, TaskInfo taskInfo) {
+    public String getRunningTasks() {
+        try {
+            if (uuid == null) {
+                throw new NullPointerException("uuid is null");
+            }
+            return thriftClient.getRunningTasks(uuid);
+        } catch (TException e) {
+            e.printStackTrace();
+            return uuid;
+        }
+    }
+
+    public boolean addTask(TaskInfo taskInfo) {
         try {
             if (uuid == null) {
                 throw new NullPointerException("uuid is null");
@@ -81,6 +94,14 @@ public class CrawlClient {
         }
 
         return false;
+    }
+    public String getTaskSummary() {
+        try {
+            return thriftClient.getTaskSummary(uuid);
+        } catch (TException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public void validateConfig(ConsumerConfig config) throws IllegalArgumentException {
