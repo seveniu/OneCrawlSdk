@@ -7,6 +7,8 @@
 package com.seveniu.crawlClient;
 
 
+import java.util.Map;
+import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
 public enum Proxy implements TEnum {

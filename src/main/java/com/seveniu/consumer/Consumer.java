@@ -1,8 +1,8 @@
 package com.seveniu.consumer;
 
+import com.seveniu.def.TaskStatus;
 import com.seveniu.node.Node;
 import com.seveniu.task.CrawlTaskStatistic;
-import com.seveniu.thrift.TaskStatus;
 
 /**
  * Created by seveniu on 5/26/16.

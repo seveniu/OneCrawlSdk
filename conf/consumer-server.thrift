@@ -1,6 +1,6 @@
  namespace java com.seveniu.thrift
  enum TaskStatus {
-    WAIT,RUNNING,STOP
+    WAIT,RUNNING,STOP,FAIL
  }
  service ConsumerThrift{
   bool has(1:string url)

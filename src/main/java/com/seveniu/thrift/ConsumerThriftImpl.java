@@ -2,6 +2,7 @@ package com.seveniu.thrift;
 
 import com.seveniu.common.json.Json;
 import com.seveniu.consumer.Consumer;
+import com.seveniu.def.TaskStatus;
 import com.seveniu.node.Node;
 import com.seveniu.task.CrawlTaskStatistic;
 import org.apache.thrift.TException;

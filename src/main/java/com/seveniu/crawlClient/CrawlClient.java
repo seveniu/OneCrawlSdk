@@ -1,6 +1,8 @@
 package com.seveniu.crawlClient;
 
+import com.seveniu.common.json.Json;
 import com.seveniu.common.str.StrUtil;
+import com.seveniu.def.TaskStatus;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.thrift.TException;
@@ -62,6 +64,7 @@ public class CrawlClient {
                 throw new NullPointerException("consumer config is null");
             }
         } catch (TException e) {
+            logger.error("reg {} error : {}", Json.toJson(consumerConfig), e.getMessage());
             e.printStackTrace();
         }
     }
@@ -73,12 +76,12 @@ public class CrawlClient {
             }
             return thriftClient.getRunningTasks(uuid);
         } catch (TException e) {
-            e.printStackTrace();
+            logger.error("get running task error : {}", e.getMessage());
             return uuid;
         }
     }
 
-    public boolean addTask(TaskInfo taskInfo) {
+    public TaskStatus addTask(TaskInfo taskInfo) {
         try {
             if (uuid == null) {
                 throw new NullPointerException("uuid is null");
@@ -90,15 +93,17 @@ public class CrawlClient {
                 return thriftClient.addTask(uuid, taskInfo);
             }
         } catch (TException e) {
-            e.printStackTrace();
+            logger.error("add task {} error : {}", Json.toJson(taskInfo), e.getMessage());
+            return TaskStatus.FAIL;
         }
 
-        return false;
     }
+
     public String getTaskSummary() {
         try {
             return thriftClient.getTaskSummary(uuid);
         } catch (TException e) {
+            logger.error("get task summary error : {}", e.getMessage());
             e.printStackTrace();
         }
         return null;

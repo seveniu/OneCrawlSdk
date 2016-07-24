@@ -1,6 +1,8 @@
 package com.seveniu.task;
 
 
+import com.seveniu.common.json.Json;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -189,4 +191,9 @@ public class CrawlTaskStatistic {
                 '}';
     }
 
+    public static void main(String[] args) {
+        String json = "{\"taskId\":\"50247\",\"startTime\":1469212411259,\"endTime\":1469212457163,\"startUrlCount\":3,\"createUrlCount\":41,\"createTargetUrlCount\":38,\"createNextUrlCount\":0,\"successUrlCount\":41,\"repeatUrlCount\":0,\"netErrorUrlCount\":0,\"doneUrlCount\":41,\"parseErrorCount\":0,\"createNodeCount\":38,\"doneNodeCount\":38,\"errorNodeCount\":0,\"netErrorUrlList\":[],\"parseErrorUrlList\":[]}";
+        CrawlTaskStatistic statistic = Json.toObject(json, CrawlTaskStatistic.class);
+        System.out.println(statistic);
+    }
 }
