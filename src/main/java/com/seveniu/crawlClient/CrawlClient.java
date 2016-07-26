@@ -1,10 +1,6 @@
 package com.seveniu.crawlClient;
 
-import com.seveniu.common.json.Json;
-import com.seveniu.common.str.StrUtil;
 import com.seveniu.def.TaskStatus;
-import org.apache.commons.validator.routines.InetAddressValidator;
-import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -54,107 +50,53 @@ public class CrawlClient {
 
     private static final Object lock = new Object();
 
-    public void reg(ConsumerConfig consumerConfig) {
-        try {
-            if (consumerConfig != null) {
-                synchronized (lock) {
-                    this.uuid = thriftClient.reg(consumerConfig);
-                }
-            } else {
-                throw new NullPointerException("consumer config is null");
-            }
-        } catch (TException e) {
-            logger.error("reg {} error : {}", Json.toJson(consumerConfig), e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public String getRunningTasks() {
-        try {
-            if (uuid == null) {
-                throw new NullPointerException("uuid is null");
-            }
-            return thriftClient.getRunningTasks(uuid);
-        } catch (TException e) {
-            logger.error("get running task error : {}", e.getMessage());
-            return uuid;
-        }
-    }
-
-    public TaskStatus addTask(TaskInfo taskInfo) {
-        try {
-            if (uuid == null) {
-                throw new NullPointerException("uuid is null");
-            }
-            if (taskInfo == null) {
-                throw new NullPointerException("task is null");
-            }
+    public void reg(ConsumerConfig consumerConfig) throws TException {
+        if (consumerConfig != null) {
             synchronized (lock) {
-                return thriftClient.addTask(uuid, taskInfo);
+                this.uuid = thriftClient.reg(consumerConfig);
             }
-        } catch (TException e) {
-            logger.error("add task {} error : {}", Json.toJson(taskInfo), e.getMessage());
-            return TaskStatus.FAIL;
+        } else {
+            throw new NullPointerException("consumer config is null");
         }
 
     }
 
-    public String getTaskSummary() {
-        try {
+    public String getRunningTasks() throws TException {
+        if (uuid == null) {
+            throw new NullPointerException("uuid is null");
+        }
+        synchronized (lock) {
+            return thriftClient.getRunningTasks(uuid);
+        }
+
+    }
+
+    public ResourceInfo getResourceInfo() throws TException {
+        if (uuid == null) {
+            throw new NullPointerException("uuid is null");
+        }
+        synchronized (lock) {
+            return thriftClient.getResourceInfo(uuid);
+        }
+
+    }
+
+    public TaskStatus addTask(TaskInfo taskInfo) throws TException {
+        if (uuid == null) {
+            throw new NullPointerException("uuid is null");
+        }
+        if (taskInfo == null) {
+            throw new NullPointerException("task is null");
+        }
+        synchronized (lock) {
+            return thriftClient.addTask(uuid, taskInfo);
+        }
+
+    }
+
+    public String getTaskSummary() throws TException {
+        synchronized (lock) {
             return thriftClient.getTaskSummary(uuid);
-        } catch (TException e) {
-            logger.error("get task summary error : {}", e.getMessage());
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public void validateConfig(ConsumerConfig config) throws IllegalArgumentException {
-
-        String type = config.getType();
-        if (StrUtil.isEmpty(config.name)) {
-            throw new IllegalArgumentException("name is empty");
-        }
-        if (StrUtil.isEmpty(type)) {
-            throw new IllegalArgumentException("type is empty");
-        }
-        if (!type.equals("http") && !type.equals("thrift")) {
-            throw new IllegalArgumentException("type is error : " + type);
-        }
-
-        if (type.equals("http")) {
-            UrlValidator urlValidator = new UrlValidator(new String[]{"http", "https"});
-            if (StrUtil.isEmpty(config.statisticUrl)) {
-                throw new IllegalArgumentException("statisticUrl is empty");
-            }
-            if (StrUtil.isEmpty(config.doneUrl)) {
-                throw new IllegalArgumentException("doneUrl is empty");
-            }
-            if (StrUtil.isEmpty(config.duplicateUrl)) {
-                throw new IllegalArgumentException("duplicateUrl is empty");
-            }
-            if (!urlValidator.isValid(config.statisticUrl)) {
-                throw new IllegalArgumentException("statisticUrl is error : " + config.statisticUrl);
-            }
-            if (!urlValidator.isValid(config.doneUrl)) {
-                throw new IllegalArgumentException("doneUrl is error : " + config.doneUrl);
-            }
-            if (!urlValidator.isValid(config.duplicateUrl)) {
-                throw new IllegalArgumentException("duplicateUrl is error : " + config.duplicateUrl);
-            }
-        }
-
-        if (type.equals("thrift")) {
-            if (StrUtil.isEmpty(config.host)) {
-                throw new IllegalArgumentException("host is empty");
-            }
-            if (config.port == 0) {
-                throw new IllegalArgumentException("port is not set");
-            }
-            if (!InetAddressValidator.getInstance().isValid(config.host)) {
-                throw new IllegalArgumentException("host is error : " + config.host);
-            }
-
         }
     }
 

@@ -5,6 +5,7 @@ import com.seveniu.crawlClient.ConsumerConfig;
 import com.seveniu.crawlClient.CrawlClient;
 import com.seveniu.thrift.ConsumerThrift;
 import com.seveniu.thrift.ConsumerThriftImpl;
+import org.apache.thrift.TException;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
@@ -23,7 +24,7 @@ public class ConsumerServer {
     private static Logger logger = LoggerFactory.getLogger(ConsumerServer.class);
     private static volatile boolean running = false;
 
-    public static void start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) throws TTransportException, ConnectException {
+    public static void start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) throws ConnectException, TException {
         if ("thrift".equals(config.getType())) {
             startConsumerServer(consumer, config.getPort());
         }

@@ -1,5 +1,5 @@
  namespace java com.seveniu.thrift
- enum TaskStatus {
+ enum TaskStatus { // 其实使用 com.seveniu.def.TaskStatus
     WAIT,RUNNING,STOP,FAIL
  }
  service ConsumerThrift{

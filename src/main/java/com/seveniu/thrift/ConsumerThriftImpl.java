@@ -1,6 +1,6 @@
 package com.seveniu.thrift;
 
-import com.seveniu.common.json.Json;
+import com.alibaba.fastjson.JSON;
 import com.seveniu.consumer.Consumer;
 import com.seveniu.def.TaskStatus;
 import com.seveniu.node.Node;
@@ -50,7 +50,7 @@ public class ConsumerThriftImpl implements ConsumerThrift.Iface {
             @Override
             public void run() {
                 try {
-                    consumer.done(Json.toObject(node, Node.class));
+                    consumer.done(JSON.parseObject(node, Node.class));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -61,7 +61,7 @@ public class ConsumerThriftImpl implements ConsumerThrift.Iface {
     @Override
     public void statistic(String statistic) throws TException {
         try {
-            consumer.statistic(Json.toObject(statistic, CrawlTaskStatistic.class));
+            consumer.statistic(JSON.parseObject(statistic, CrawlTaskStatistic.class));
         } catch (Exception e) {
             e.printStackTrace();
         }
