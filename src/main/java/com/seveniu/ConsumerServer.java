@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by seveniu on 5/26/16.
@@ -31,7 +32,7 @@ public class ConsumerServer {
 
         try {
             logger.info("connect crawl server after 3 second!");
-            Thread.sleep(3000);
+            TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
