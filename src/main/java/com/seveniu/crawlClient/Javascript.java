@@ -7,13 +7,11 @@
 package com.seveniu.crawlClient;
 
 
-import java.util.Map;
-import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
 public enum Javascript implements TEnum {
-  OFF(1),
-  ON(2);
+  ON(1),
+  OFF(2);
 
   private final int value;
 
@@ -35,9 +33,9 @@ public enum Javascript implements TEnum {
   public static Javascript findByValue(int value) { 
     switch (value) {
       case 1:
-        return OFF;
-      case 2:
         return ON;
+      case 2:
+        return OFF;
       default:
         return null;
     }
