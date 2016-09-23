@@ -1,6 +1,7 @@
 
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'maven'
 
 repositories {
     mavenLocal()
@@ -13,6 +14,9 @@ dependencies {
     compile('commons-validator:commons-validator:1.4.0')
 }
 
+configurations {
+    deployerJars
+}
 idea {
     module {
         inheritOutputDirs = false
