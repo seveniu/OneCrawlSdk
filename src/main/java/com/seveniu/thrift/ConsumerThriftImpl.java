@@ -43,8 +43,9 @@ public class ConsumerThriftImpl implements ConsumerThrift.Iface {
 
     @Override
     public void done(String node) {
-        if (executor.getQueue().size() > 1000) {
-            logger.warn("data transfer queue size than 100");
+        int size = executor.getQueue().size();
+        if (size > 1000) {
+            logger.warn("data transfer queue size than 1000, cur size : {}", size);
         }
         executor.execute(new Runnable() {
             @Override
