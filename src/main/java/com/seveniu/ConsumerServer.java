@@ -25,12 +25,13 @@ public class ConsumerServer {
     private static Logger logger = LoggerFactory.getLogger(ConsumerServer.class);
     private static volatile boolean running = false;
 
-    public static void start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) throws ConnectException, TException {
+    public static void start(String crawlHost, int crawlPort, String dataQueueHost, int dataQueuePort, Consumer consumer, ConsumerConfig config) throws ConnectException, TException {
         if ("thrift".equals(config.getType())) {
             startConsumerServer(consumer, config.getPort());
         }
 
         try {
+            new DataQueue().start(dataQueueHost, dataQueuePort, config.getName(), consumer);
             logger.info("connect crawl server after 3 second!");
             TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException e) {
@@ -38,6 +39,14 @@ public class ConsumerServer {
         }
         CrawlClient.get().build(crawlHost, crawlPort);
         CrawlClient.get().reg(config);
+    }
+
+    public static void start() throws ConnectException, TException {
+
+    }
+
+    public static void start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) throws ConnectException, TException {
+        start(crawlHost, crawlPort, "127.0.0.1", 6379, consumer, config);
     }
 
     private static void startConsumerServer(Consumer consumer, int port) {

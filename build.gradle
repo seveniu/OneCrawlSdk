@@ -12,6 +12,7 @@ dependencies {
     compile('org.apache.thrift:libthrift:0.9.3')
     compile('com.alibaba:fastjson:1.2.14')
     compile('commons-validator:commons-validator:1.4.0')
+    compile('redis.clients:jedis:2.8.0')
 }
 
 configurations {
