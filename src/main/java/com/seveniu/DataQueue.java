@@ -18,30 +18,23 @@ public class DataQueue {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-            0, 20, 10, TimeUnit.MINUTES, new SynchronousQueue<>(),
-            new ThreadFactory() {
-                AtomicInteger count = new AtomicInteger();
+    private String host;
+    private int port;
+    private String key;
+    private Consumer consumer;
+    private int threadNum = 20;
 
-                @Override
-                public Thread newThread(Runnable r) {
-                    return new Thread(r, "data-process-thread-" + count.getAndIncrement());
-                }
-            },
-            new RejectedExecutionHandler() {
-                @Override
-                public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                    if (!executor.isShutdown()) {
-                        try {
-                            executor.getQueue().put(r);
-                        } catch (InterruptedException e) {
-                            // should not be interrupted
-                        }
-                    }
-                }
-            });
+    public DataQueue(String host, int port, String key, Consumer consumer) {
+        this.host = host;
+        this.port = port;
+        this.key = key;
+        this.consumer = consumer;
+    }
 
-    public void start(String host, int port, final String key, Consumer consumer) {
+    private ThreadPoolExecutor threadPoolExecutor;
+
+    public void start() {
+        init();
         Jedis jedis = new Jedis(host, port);
         new Thread(new Runnable() {
             @Override
@@ -64,4 +57,55 @@ public class DataQueue {
 
     }
 
+    private void init() {
+        if (threadPoolExecutor == null) {
+            this.threadPoolExecutor = new ThreadPoolExecutor(
+                    threadNum, threadNum, 10, TimeUnit.MINUTES, new SynchronousQueue<>(),
+                    new ThreadFactory() {
+                        AtomicInteger count = new AtomicInteger();
+
+                        @Override
+                        public Thread newThread(Runnable r) {
+                            return new Thread(r, "data-process-thread-" + count.getAndIncrement());
+                        }
+                    },
+                    new RejectedExecutionHandler() {
+                        @Override
+                        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+                            if (!executor.isShutdown()) {
+                                try {
+                                    executor.getQueue().put(r);
+                                } catch (InterruptedException e) {
+                                    // should not be interrupted
+                                }
+                            }
+                        }
+                    }
+            );
+        }
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public void setConsumer(Consumer consumer) {
+        this.consumer = consumer;
+    }
+
+    public void setThreadNum(int threadNum) {
+        this.threadNum = threadNum;
+    }
+
+    public void setThreadPoolExecutor(ThreadPoolExecutor threadPoolExecutor) {
+        this.threadPoolExecutor = threadPoolExecutor;
+    }
 }

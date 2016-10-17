@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,33 +24,52 @@ import java.util.concurrent.TimeUnit;
 public class ConsumerServer {
 
     private static Logger logger = LoggerFactory.getLogger(ConsumerServer.class);
-    private static volatile boolean running = false;
+    private volatile boolean running = false;
+    private String crawlHost;
+    private int crawlPort;
+    private String dataQueueHost;
+    private int dataQueuePort;
+    private Consumer consumer;
+    private ConsumerConfig consumerConfig;
+    private DataQueue dataQueue;
 
-    public static void start(String crawlHost, int crawlPort, String dataQueueHost, int dataQueuePort, Consumer consumer, ConsumerConfig config) throws ConnectException, TException {
-        if ("thrift".equals(config.getType())) {
-            startConsumerServer(consumer, config.getPort());
+    public ConsumerServer(boolean running, String crawlHost, int crawlPort, String dataQueueHost, int dataQueuePort, Consumer consumer, com.seveniu.crawlClient.ConsumerConfig consumerConfig) {
+        this.running = running;
+        this.crawlHost = crawlHost;
+        this.crawlPort = crawlPort;
+        this.dataQueueHost = dataQueueHost;
+        this.dataQueuePort = dataQueuePort;
+        this.consumer = consumer;
+        this.consumerConfig = consumerConfig;
+        this.dataQueue = new DataQueue(dataQueueHost, dataQueuePort, consumerConfig.getName(), consumer);
+    }
+
+    public void start() throws ConnectException, TException {
+        if ("thrift".equals(consumerConfig.getType())) {
+            startConsumerServer(consumer, consumerConfig.getPort());
         }
 
         try {
-            new DataQueue().start(dataQueueHost, dataQueuePort, config.getName(), consumer);
+            this.dataQueue.start();
             logger.info("connect crawl server after 3 second!");
             TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         CrawlClient.get().build(crawlHost, crawlPort);
-        CrawlClient.get().reg(config);
+        CrawlClient.get().reg(consumerConfig);
     }
 
-    public static void start() throws ConnectException, TException {
-
+    public void setDataConsumerThreadNum(int threadNum) {
+        this.dataQueue.setThreadNum(threadNum);
     }
 
-    public static void start(String crawlHost, int crawlPort, Consumer consumer, ConsumerConfig config) throws ConnectException, TException {
-        start(crawlHost, crawlPort, "127.0.0.1", 6379, consumer, config);
+    public void setDataConsumerThreadPool(ThreadPoolExecutor executor) {
+        this.dataQueue.setThreadPoolExecutor(executor);
     }
 
-    private static void startConsumerServer(Consumer consumer, int port) {
+
+    private void startConsumerServer(Consumer consumer, int port) {
         if (running) {
             logger.debug(" server is running ");
             return;
