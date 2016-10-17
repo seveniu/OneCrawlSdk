@@ -33,8 +33,7 @@ public class ConsumerServer {
     private ConsumerConfig consumerConfig;
     private DataQueue dataQueue;
 
-    public ConsumerServer(boolean running, String crawlHost, int crawlPort, String dataQueueHost, int dataQueuePort, Consumer consumer, com.seveniu.crawlClient.ConsumerConfig consumerConfig) {
-        this.running = running;
+    public ConsumerServer(String crawlHost, int crawlPort, String dataQueueHost, int dataQueuePort, Consumer consumer, com.seveniu.crawlClient.ConsumerConfig consumerConfig) {
         this.crawlHost = crawlHost;
         this.crawlPort = crawlPort;
         this.dataQueueHost = dataQueueHost;
