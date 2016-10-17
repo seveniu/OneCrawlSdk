@@ -60,7 +60,7 @@ public class DataQueue {
     private void init() {
         if (threadPoolExecutor == null) {
             this.threadPoolExecutor = new ThreadPoolExecutor(
-                    threadNum, threadNum, 10, TimeUnit.MINUTES, new SynchronousQueue<>(),
+                    0, threadNum, 10, TimeUnit.MINUTES, new SynchronousQueue<>(),
                     new ThreadFactory() {
                         AtomicInteger count = new AtomicInteger();
 
