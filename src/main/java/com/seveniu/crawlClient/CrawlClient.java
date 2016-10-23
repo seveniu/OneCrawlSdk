@@ -51,11 +51,9 @@ public class CrawlClient {
     }
 
 
-    public void reg(String host, String queueHost, int queuePort, ConsumerConfig consumerConfig, Consumer consumer) {
+    public void reg(String host, ConsumerConfig consumerConfig) {
         this.host = host;
         this.uuid = post(host + "/api/consumer/reg", JSON.toJSONString(consumerConfig));
-        this.taskQueue = new TaskQueue(queueHost, queuePort, consumerConfig.getName());
-        this.dataQueue = new DataQueue(queueHost, queuePort, consumerConfig.getName(), consumer);
     }
 
     public String getRunningTasks() {
@@ -102,7 +100,9 @@ public class CrawlClient {
         this.dataQueue.setThreadNum(num);
     }
 
-    public void start() {
+    public void start(String name, String queueHost, int queuePort, Consumer consumer) {
+        this.taskQueue = new TaskQueue(queueHost, queuePort, name);
+        this.dataQueue = new DataQueue(queueHost, queuePort, name, consumer);
         this.dataQueue.start();
     }
 }
