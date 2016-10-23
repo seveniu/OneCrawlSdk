@@ -1,16 +1,26 @@
 package com.seveniu.crawlClient;
 
-import com.seveniu.def.TaskStatus;
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+import com.alibaba.fastjson.JSON;
+import com.seveniu.DataQueue;
+import com.seveniu.consumer.Consumer;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.ConnectException;
+import java.io.IOException;
 
 /**
  * Created by seveniu on 7/3/16.
@@ -18,86 +28,81 @@ import java.net.ConnectException;
  */
 public class CrawlClient {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    private static CrawlClient crawlClient = new CrawlClient();
-    private String uuid;
+    private HttpClient httpClient;
+    private String host = "http://127.0.0.1:20001";
 
     private CrawlClient() {
-
+        Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", PlainConnectionSocketFactory.INSTANCE)
+                .register("https", SSLConnectionSocketFactory.getSocketFactory())
+                .build();
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(reg);
+        connectionManager.setDefaultMaxPerRoute(20);
+        httpClient = HttpClientBuilder.create().setConnectionManager(connectionManager).build();
     }
+
+    private static CrawlClient crawlClient = new CrawlClient();
+    private TaskQueue taskQueue;
+    private DataQueue dataQueue;
+    private String uuid;
 
     public static CrawlClient get() {
         return crawlClient;
     }
 
-    private CrawlThrift.Client thriftClient;
 
-    public CrawlThrift.Client build(String host, int port) throws TTransportException, ConnectException {
-
-        TTransport transport = new TSocket(host, port);
-        transport.open();
-
-        logger.info("crawl server connect /{}:{}", host, port);
-
-        TProtocol protocol = new TBinaryProtocol(transport);
-        this.thriftClient = new CrawlThrift.Client(protocol);
-        return this.thriftClient;
+    public void reg(String host, String queueHost, int queuePort, ConsumerConfig consumerConfig, Consumer consumer) {
+        this.host = host;
+        this.uuid = post(host + "/api/consumer/reg", JSON.toJSONString(consumerConfig));
+        this.taskQueue = new TaskQueue(queueHost, queuePort, consumerConfig.getName());
+        this.dataQueue = new DataQueue(queueHost, queuePort, consumerConfig.getName(), consumer);
     }
 
-    public CrawlThrift.Client getThriftClient() {
-        return thriftClient;
+    public String getRunningTasks() {
+        return requestGet(host + "/api/consumer/running-task?uuid=" + uuid);
     }
 
-    private static final Object lock = new Object();
-
-    public void reg(ConsumerConfig consumerConfig) throws TException {
-        if (consumerConfig != null) {
-            synchronized (lock) {
-                this.uuid = thriftClient.reg(consumerConfig);
-            }
-        } else {
-            throw new NullPointerException("consumer config is null");
-        }
-
+    public ResourceInfo getResourceInfo() {
+        return JSON.parseObject(requestGet(host + "/api/consumer/resource-info?uuid=" + uuid), ResourceInfo.class);
     }
 
-    public String getRunningTasks() throws TException {
-        if (uuid == null) {
-            throw new NullPointerException("uuid is null");
-        }
-        synchronized (lock) {
-            return thriftClient.getRunningTasks(uuid);
-        }
 
+    public void addTask(TaskInfo taskInfo) {
+        taskQueue.addTask(taskInfo);
     }
 
-    public ResourceInfo getResourceInfo() throws TException {
-        if (uuid == null) {
-            throw new NullPointerException("uuid is null");
-        }
-        synchronized (lock) {
-            return thriftClient.getResourceInfo(uuid);
-        }
-
+    public String getTaskSummary() {
+        return requestGet(host + "/api/consumer/task-summary?uuid=" + uuid);
     }
 
-    public TaskStatus addTask(TaskInfo taskInfo) throws TException {
-        if (uuid == null) {
-            throw new NullPointerException("uuid is null");
-        }
-        if (taskInfo == null) {
-            throw new NullPointerException("task is null");
-        }
-        synchronized (lock) {
-            return thriftClient.addTask(uuid, taskInfo);
-        }
-
-    }
-
-    public String getTaskSummary() throws TException {
-        synchronized (lock) {
-            return thriftClient.getTaskSummary(uuid);
+    private String requestGet(String url) {
+        HttpGet get = new HttpGet(url);
+        try {
+            HttpResponse response = httpClient.execute(get);
+            return EntityUtils.toString(response.getEntity());
+        } catch (IOException e) {
+            throw new RuntimeException("request error : " + e.getMessage(), e);
         }
     }
 
+    private String post(String url, String body) {
+        HttpPost post = new HttpPost(url);
+        post.setHeader("Content-Type", "application/json");
+        try {
+            HttpEntity entity = new ByteArrayEntity(body.getBytes("UTF-8"));
+            post.setEntity(entity);
+            HttpResponse response = httpClient.execute(post);
+            return EntityUtils.toString(response.getEntity());
+        } catch (IOException e) {
+            throw new RuntimeException("request error : " + e.getMessage(), e);
+        }
+    }
+
+    public void setDateQueueThread(int num) {
+        this.dataQueue.setThreadNum(num);
+    }
+
+    public void start() {
+        this.dataQueue.start();
+    }
 }

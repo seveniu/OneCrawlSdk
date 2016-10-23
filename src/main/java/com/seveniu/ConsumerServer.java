@@ -1,8 +1,6 @@
 package com.seveniu;
 
 import com.seveniu.consumer.Consumer;
-import com.seveniu.crawlClient.ConsumerConfig;
-import com.seveniu.crawlClient.CrawlClient;
 import com.seveniu.thrift.ConsumerThrift;
 import com.seveniu.thrift.ConsumerThriftImpl;
 import org.apache.thrift.TException;
@@ -14,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.ConnectException;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,48 +22,24 @@ public class ConsumerServer {
 
     private static Logger logger = LoggerFactory.getLogger(ConsumerServer.class);
     private volatile boolean running = false;
-    private String crawlHost;
-    private int crawlPort;
-    private String dataQueueHost;
-    private int dataQueuePort;
     private Consumer consumer;
-    private ConsumerConfig consumerConfig;
-    private DataQueue dataQueue;
+    private int port;
 
-    public ConsumerServer(String crawlHost, int crawlPort, String dataQueueHost, int dataQueuePort, Consumer consumer, com.seveniu.crawlClient.ConsumerConfig consumerConfig) {
-        this.crawlHost = crawlHost;
-        this.crawlPort = crawlPort;
-        this.dataQueueHost = dataQueueHost;
-        this.dataQueuePort = dataQueuePort;
+    public ConsumerServer(Consumer consumer, int port) {
         this.consumer = consumer;
-        this.consumerConfig = consumerConfig;
-        this.dataQueue = new DataQueue(dataQueueHost, dataQueuePort, consumerConfig.getName(), consumer);
+        this.port = port;
     }
 
     public void start() throws ConnectException, TException {
-        if ("thrift".equals(consumerConfig.getType())) {
-            startConsumerServer(consumer, consumerConfig.getPort());
-        }
+        startConsumerServer(consumer, port);
 
         try {
-            this.dataQueue.start();
             logger.info("connect crawl server after 3 second!");
             TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        CrawlClient.get().build(crawlHost, crawlPort);
-        CrawlClient.get().reg(consumerConfig);
     }
-
-    public void setDataConsumerThreadNum(int threadNum) {
-        this.dataQueue.setThreadNum(threadNum);
-    }
-
-    public void setDataConsumerThreadPool(ThreadPoolExecutor executor) {
-        this.dataQueue.setThreadPoolExecutor(executor);
-    }
-
 
     private void startConsumerServer(Consumer consumer, int port) {
         if (running) {

@@ -18,6 +18,7 @@ public class DataQueue {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private final static String PREFIX = "data-";
     private String host;
     private int port;
     private String key;
@@ -27,7 +28,7 @@ public class DataQueue {
     public DataQueue(String host, int port, String key, Consumer consumer) {
         this.host = host;
         this.port = port;
-        this.key = key;
+        this.key = PREFIX + key;
         this.consumer = consumer;
     }
 
