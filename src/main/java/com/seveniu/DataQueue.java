@@ -51,6 +51,11 @@ public class DataQueue {
                         });
                     } catch (Exception e) {
                         logger.error("consumer data error : {}", e.getMessage());
+                        try {
+                            TimeUnit.SECONDS.sleep(5);
+                        } catch (InterruptedException e1) {
+                            e1.printStackTrace();
+                        }
                     }
                 }
             }
