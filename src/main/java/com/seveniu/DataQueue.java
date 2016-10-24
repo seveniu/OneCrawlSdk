@@ -3,14 +3,15 @@ package com.seveniu;
 import com.alibaba.fastjson.JSON;
 import com.seveniu.consumer.Consumer;
 import com.seveniu.node.Node;
+import com.seveniu.util.DBUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -23,66 +24,59 @@ public class DataQueue {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final static String PREFIX = "data-";
-    private String host;
-    private int port;
     private String key;
     private Consumer consumer;
     private int threadNum = 20;
-    private Connection connection;
 
-//    public DataQueue(String host, int port, String key, Consumer consumer) {
-//        this.host = host;
-//        this.port = port;
-//        this.key = key;
-//        this.consumer = consumer;
-//    }
-
-
-    public DataQueue(String key) {
+    public DataQueue(String key, Consumer consumer) {
         this.key = key;
+        this.consumer = consumer;
     }
 
     private ThreadPoolExecutor threadPoolExecutor;
 
     public void start() {
         init();
-        Jedis jedis = new Jedis(host, port);
+        try {
+            DBUtil.openConnection();
+        } catch (SQLException | ClassNotFoundException | IOException e) {
+            throw new RuntimeException(e);
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try {
-                        PreparedStatement pstmt = connection.prepareStatement("select `data` from queue where `name` = ? limit ?");
-                        pstmt.setString(1, key);
-                        pstmt.setInt(2, threadNum);
-                        ResultSet rs = pstmt.executeQuery();
-                        while (rs.next()) {
-                            String data = rs.getString(1);
-                            threadPoolExecutor.execute(new Runnable() {
-                                @Override
-                                public void run() {
-                                    consumer.done(JSON.parseObject(data, Node.class));
-                                    connection.
-                                    try {
-                                        TimeUnit.SECONDS.sleep(1);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                    System.out.println(data);
-                                }
-                            });
+                        if (threadPoolExecutor.getActiveCount() >= threadPoolExecutor.getMaximumPoolSize()) {
+                            TimeUnit.SECONDS.sleep(2);
+                            logger.info("executor is all active");
+                            continue;
                         }
-                        if(rs.getFetchSize() == 0) {
-                            TimeUnit.SECONDS.sleep(5);
+                        List<Map<String, Object>> mapList = DBUtil.queryMapList("select id,`data` from queue where `name` = ? limit ?", key, threadNum);
+                        Map<String, Object> map = DBUtil.queryMap("select id,`data` from queue where `name` = ? limit 1", key);
+                        if (map == null) {
+                            TimeUnit.SECONDS.sleep(10);
+                            logger.info("queue : {} is empty", key);
+                            continue;
                         }
+                        List<Integer> ids = new LinkedList<>();
 
-//                        String data = jedis.blpop(0, PREFIX + key).get(1);
-//                        threadPoolExecutor.execute(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                consumer.done(JSON.parseObject(data, Node.class));
-//                            }
-//                        });
+                        int id = ((Long) map.get("id")).intValue();
+                        ids.add(id);
+                        String data = (String) map.get("data");
+                        threadPoolExecutor.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                consumer.done(JSON.parseObject(data, Node.class));
+                                try {
+                                    TimeUnit.SECONDS.sleep(1);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                System.out.println(data);
+                            }
+                        });
+                        DBUtil.update("delete from queue where id =?", id);
                     } catch (Exception e) {
                         logger.error("consumer data error : {}", e.getMessage());
                         e.printStackTrace();
@@ -123,24 +117,7 @@ public class DataQueue {
                     }
             );
 
-            try {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                connection = DriverManager.getConnection(
-                        "jdbc:mysql://10.211.55.3:3306/data-queue", "xxx", "password");
-//here sonoo is database name, root is username and password
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
         }
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
     }
 
     public void setKey(String key) {
