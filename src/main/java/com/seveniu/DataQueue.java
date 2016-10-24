@@ -73,7 +73,6 @@ public class DataQueue {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                System.out.println(data);
                             }
                         });
                         DBUtil.update("delete from queue where id =?", id);

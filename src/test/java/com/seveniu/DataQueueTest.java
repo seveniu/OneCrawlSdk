@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 public class DataQueueTest {
     @Test
     public void start() throws Exception {
-        new DataQueue("a").start();
+//        new DataQueue("a").start();
         TimeUnit.SECONDS.sleep(100);
     }
     @Test
