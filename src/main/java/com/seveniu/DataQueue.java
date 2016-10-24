@@ -7,6 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,12 +28,18 @@ public class DataQueue {
     private String key;
     private Consumer consumer;
     private int threadNum = 20;
+    private Connection connection;
 
-    public DataQueue(String host, int port, String key, Consumer consumer) {
-        this.host = host;
-        this.port = port;
-        this.key = PREFIX + key;
-        this.consumer = consumer;
+//    public DataQueue(String host, int port, String key, Consumer consumer) {
+//        this.host = host;
+//        this.port = port;
+//        this.key = key;
+//        this.consumer = consumer;
+//    }
+
+
+    public DataQueue(String key) {
+        this.key = key;
     }
 
     private ThreadPoolExecutor threadPoolExecutor;
@@ -42,15 +52,40 @@ public class DataQueue {
             public void run() {
                 while (true) {
                     try {
-                        String data = jedis.blpop(0, key).get(1);
-                        threadPoolExecutor.execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                consumer.done(JSON.parseObject(data, Node.class));
-                            }
-                        });
+                        PreparedStatement pstmt = connection.prepareStatement("select `data` from queue where `name` = ? limit ?");
+                        pstmt.setString(1, key);
+                        pstmt.setInt(2, threadNum);
+                        ResultSet rs = pstmt.executeQuery();
+                        while (rs.next()) {
+                            String data = rs.getString(1);
+                            threadPoolExecutor.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    consumer.done(JSON.parseObject(data, Node.class));
+                                    connection.
+                                    try {
+                                        TimeUnit.SECONDS.sleep(1);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    System.out.println(data);
+                                }
+                            });
+                        }
+                        if(rs.getFetchSize() == 0) {
+                            TimeUnit.SECONDS.sleep(5);
+                        }
+
+//                        String data = jedis.blpop(0, PREFIX + key).get(1);
+//                        threadPoolExecutor.execute(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                consumer.done(JSON.parseObject(data, Node.class));
+//                            }
+//                        });
                     } catch (Exception e) {
                         logger.error("consumer data error : {}", e.getMessage());
+                        e.printStackTrace();
                         try {
                             TimeUnit.SECONDS.sleep(5);
                         } catch (InterruptedException e1) {
@@ -60,7 +95,6 @@ public class DataQueue {
                 }
             }
         }, "get-data-from-queue-thread").start();
-
     }
 
     private void init() {
@@ -88,6 +122,16 @@ public class DataQueue {
                         }
                     }
             );
+
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                connection = DriverManager.getConnection(
+                        "jdbc:mysql://10.211.55.3:3306/data-queue", "xxx", "password");
+//here sonoo is database name, root is username and password
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
     }
 

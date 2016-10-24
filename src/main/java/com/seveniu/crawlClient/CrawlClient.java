@@ -102,7 +102,7 @@ public class CrawlClient {
 
     public void start(String name, String queueHost, int queuePort, Consumer consumer) {
         this.taskQueue = new TaskQueue(queueHost, queuePort, name);
-        this.dataQueue = new DataQueue(queueHost, queuePort, name, consumer);
+//        this.dataQueue = new DataQueue(queueHost, queuePort, name, consumer);
         this.dataQueue.start();
     }
 }
