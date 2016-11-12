@@ -79,6 +79,7 @@ public class DataQueue {
                                         TimeUnit.SECONDS.sleep(1);
                                     } catch (Exception e) {
                                         e.printStackTrace();
+                                        logger.error("data queue process data id: {} error", id, e);
                                     }
                                 }
                             });
