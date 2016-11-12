@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -53,29 +52,37 @@ public class DataQueue {
                             continue;
                         }
                         List<Map<String, Object>> mapList = DBUtil.queryMapList("select id,`data` from queue where `name` = ? limit ?", key, threadNum);
-                        Map<String, Object> map = DBUtil.queryMap("select id,`data` from queue where `name` = ? limit 1", key);
-                        if (map == null) {
+                        if (mapList == null) {
+                            throw new RuntimeException("query data return null");
+                        }
+                        if (mapList.size() == 0) {
                             TimeUnit.SECONDS.sleep(10);
                             logger.info("queue : {} is empty", key);
                             continue;
                         }
-                        List<Integer> ids = new LinkedList<>();
+//                        Map<String, Object> map = DBUtil.queryMap("select id,`data` from queue where `name` = ? limit 1", key);
+//                        if (map == null) {
+//                            TimeUnit.SECONDS.sleep(10);
+//                            logger.info("queue : {} is empty", key);
+//                            continue;
+//                        }
+                        for (Map<String, Object> map : mapList) {
 
-                        int id = ((Long) map.get("id")).intValue();
-                        ids.add(id);
-                        String data = (String) map.get("data");
-                        threadPoolExecutor.execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                consumer.done(JSON.parseObject(data, Node.class));
-                                try {
-                                    TimeUnit.SECONDS.sleep(1);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
+                            int id = ((Long) map.get("id")).intValue();
+                            String data = (String) map.get("data");
+                            threadPoolExecutor.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        consumer.done(JSON.parseObject(data, Node.class));
+                                        DBUtil.update("delete from queue where id =?", id);
+                                        TimeUnit.SECONDS.sleep(1);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
                                 }
-                            }
-                        });
-                        DBUtil.update("delete from queue where id =?", id);
+                            });
+                        }
                     } catch (Exception e) {
                         logger.error("consumer data error : {}", e.getMessage());
                         e.printStackTrace();
