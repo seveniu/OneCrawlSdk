@@ -44,6 +44,7 @@ public class DataQueue {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                int lastId = 0;
                 while (true) {
                     try {
                         if (threadPoolExecutor.getActiveCount() >= threadPoolExecutor.getMaximumPoolSize()) {
@@ -51,7 +52,7 @@ public class DataQueue {
                             logger.info("executor is all active");
                             continue;
                         }
-                        List<Map<String, Object>> mapList = DBUtil.queryMapList("select id,`data` from queue where `name` = ? limit ?", key, threadNum);
+                        List<Map<String, Object>> mapList = DBUtil.queryMapList("select id,`data` from queue where `name` = ? and id > ? limit ?", key, lastId, threadNum);
                         if (mapList == null) {
                             throw new RuntimeException("query data return null");
                         }
@@ -83,6 +84,7 @@ public class DataQueue {
                                     }
                                 }
                             });
+                            lastId = id;
                         }
                     } catch (Exception e) {
                         logger.error("consumer data error : {}", e.getMessage());
