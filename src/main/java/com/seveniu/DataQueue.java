@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,11 +37,19 @@ public class DataQueue {
 
     public void start() {
         init();
+        int sleepTime = 60; // second
         try {
             DBUtil.openConnection();
+            Properties p = new Properties();
+            p.load(DataQueue.class.getResourceAsStream("/dataQueue.properties"));
+            String sleepStr = p.getProperty("emptySleepTime");
+            if (sleepStr != null) {
+                sleepTime = Integer.parseInt(sleepStr);
+            }
         } catch (SQLException | ClassNotFoundException | IOException e) {
             throw new RuntimeException(e);
         }
+        int finalSleepTime = sleepTime;
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -48,7 +57,7 @@ public class DataQueue {
                 while (true) {
                     try {
                         if (threadPoolExecutor.getActiveCount() >= threadPoolExecutor.getMaximumPoolSize()) {
-                            TimeUnit.SECONDS.sleep(2);
+                            TimeUnit.SECONDS.sleep(finalSleepTime);
                             logger.info("executor is all active");
                             continue;
                         }

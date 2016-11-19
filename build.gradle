@@ -33,16 +33,4 @@ task wrapper(type: Wrapper) {
     gradleVersion = version
     distributionUrl = "http://7xnyyx.com1.z0.glb.clouddn.com/gradle-${version}-all.zip"
 }
-uploadArchives {
-    repositories.mavenDeployer {
-        configuration = configurations.deployerJars
-        repository(url: "http://101.200.170.176:8081/nexus/content/repositories/releases/") {
-//        repository(url: "http://101.200.170.176:8081/nexus/content/repositories/snapshots/") {
-            authentication(userName: "deployment", password: "r[*N'/?=VB5#")
-        }
-//        pom.version = "1.0-SNAPSHOT"
-        pom.version = "0.0.21"
-        pom.groupId = "com.seveniu"
-        pom.artifactId = "crawl-sdk"
-    }
-}
+
