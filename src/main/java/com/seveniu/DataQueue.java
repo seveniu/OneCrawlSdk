@@ -57,7 +57,7 @@ public class DataQueue {
                 while (true) {
                     try {
                         if (threadPoolExecutor.getActiveCount() >= threadPoolExecutor.getMaximumPoolSize()) {
-                            TimeUnit.SECONDS.sleep(finalSleepTime);
+                            TimeUnit.SECONDS.sleep(10);
                             logger.info("executor is all active");
                             continue;
                         }
@@ -66,7 +66,7 @@ public class DataQueue {
                             throw new RuntimeException("query data return null");
                         }
                         if (mapList.size() == 0) {
-                            TimeUnit.SECONDS.sleep(10);
+                            TimeUnit.SECONDS.sleep(finalSleepTime);
                             logger.info("queue : {} is empty", key);
                             continue;
                         }
